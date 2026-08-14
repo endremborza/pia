@@ -1,0 +1,7 @@
+[project]
+name = "paper-improvement-agent"
+version = "0.1.0"
+description = "Research paper improvement agent - respecting citations"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
