@@ -35,20 +35,5 @@ export default defineConfig({
 		}
 	],
 	use: { baseURL: 'http://localhost:5173' },
-	projects: [
-		{
-			name: 'e2e',
-			testIgnore: '**/demo.spec.ts',
-			use: { ...devices['Desktop Chrome'] }
-		},
-		{
-			name: 'demo',
-			testMatch: '**/demo.spec.ts',
-			use: {
-				...devices['Desktop Chrome'],
-				viewport: { width: 1280, height: 900 },
-				launchOptions: { slowMo: 400 }
-			}
-		}
-	]
+	projects: [{ name: 'e2e', use: { ...devices['Desktop Chrome'] } }]
 });
