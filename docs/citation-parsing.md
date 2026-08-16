@@ -18,7 +18,7 @@ Two of them: one machine, one human.
 
 **The machine verdict is parity.** tectonic compiles the reconstruction, [paritex](https://github.com/endremborza/paritex) aligns the rebuilt PDF word-level against the original and scores the divergence. Structural gates run alongside: a round whose `refs.bib` is missing, empty, or short of the keys the text cites is rejected outright — a bibliography-less reconstruction cannot pass, whatever its word ratio. The final report (ratio plus every diverging block) is committed as `report.json`. Reconstruction loss is measured up front, not discovered at export.
 
-**The human verdict is acceptance.** The reconstruction is presented rather than assumed: the rebuilt PDF next to the original, the divergences that remain, and the citation list that was extracted - *this is what your paper looks like when we render it from our idea of what it is*. The user accepts, and the repo is created, or the user asks for a re-run, and reconstruction starts over — another backend, more rounds, a larger budget - producing a fresh candidate. The original PDF is committed to the repo.
+**The human verdict is acceptance.** The reconstruction is presented rather than assumed: the rebuilt PDF next to the original, the divergences that remain, and the citation list that was extracted - *this is what your paper looks like when we render it from our idea of what it is*. The user rules three ways: accept, and the repo is created; **refine**, sending this candidate back for another backend pass steered by an instruction ("the table on page 2 lost its last column") alongside the measured divergences; or **re-run**, starting a fresh reconstruction from the committed original — another model, more effort, a clean slate. Model and effort for the reconstruction backend are the user's dials on every one of these runs. The original PDF is committed to the repo.
 
 Acceptance is the one moment a human is asked to validate a machine's claim about *what the paper is*. Every question after it is about a proposed change, with a diff, on a branch. That is the real payoff of paying the parsing cost up front: an open-ended, recurring accuracy problem collapses into a single reviewed decision, after which the project runs on two guarantees instead of a probability - git for persistence, [hallubib](https://pypi.org/project/hallubib/) for reference correctness. It would probably worth it to allow the user to slightly correct / edit the .tex directly, but that is out of scope for now.
 
@@ -28,7 +28,7 @@ A paper that arrives as source (`.tex` upload, or `papercli init` on an existing
 flowchart LR
     P[PDF] -->|"extract + reconstruct (1–2)"| G["candidate repo<br>main.tex + refs.bib"]
     G -->|"parity (3)"| V{"accept? (4)"}
-    V -->|"re-run"| G
+    V -->|"re-run / refine"| G
     V -->|accepted| L["papercli repo<br>tagged parse/N"]
     T[".tex upload<br>papercli init"] --> L
     L -->|"locate + segment (5)"| M["cite markers +<br>reference entries"]
@@ -42,8 +42,8 @@ flowchart LR
 1. **Extract.** pymupdf pulls text, layout and raster images from the PDF (paritex).
 2. **Reconstruct.** An AI backend writes `main.tex` + `refs.bib` into the papercli repo layout; tectonic must compile it, and the structural bibliography gate must pass.
 3. **Parity.** Word-level alignment against the original scores the round and names the diverging blocks; those feed further rounds until parity converges or plateaus. The report is committed.
-4. **Accept** (user). The candidate is shown — rebuilt PDF, divergences, extracted citations — and either accepted, which tags the repo to be initiated and unlocks everything downstream, or sent back for a re-run.
-5. **Locate and segment.** In-text markers are the `\cite` commands (balanced-brace parsing, all `\cite*` variants); the reference list is `refs.bib`, where segmentation into entries comes free from BibTeX structure. Source uploads using inline `thebibliography` go through hallubib's free-text `\bibitem` parser instead.
+4. **Accept** (user). The candidate is shown — rebuilt PDF, divergences, extracted citations — and either accepted, which tags the repo to be initiated and unlocks everything downstream, refined with an instruction, or replaced by a fresh re-run.
+5. **Locate and segment.** In-text markers are the `\cite`-family commands, found by balanced-brace parsing: plain `\cite`, natbib's `\citep`/`\citet` with up to two optional arguments (`\citep[see][p.~3]{key}`), biblatex's `\parencite`/`\textcite`/`\autocite`/`\footcite`, capitalized variants, `\nocite` — and not `\citestyle`, which names a style. The set matters beyond parsing: this is the multiset the edit validator diffs, so a form that went unmatched would be a citation an edit could drop unnoticed. The reference list is `refs.bib`, where segmentation into entries comes free from BibTeX structure. Source uploads using inline `thebibliography` go through hallubib's free-text `\bibitem` parser instead.
 6. **Parse fields.** hallubib parses each entry into a typed reference — structured author names, title, venue, year, DOI/arXiv ids — with LaTeX accent and unicode normalization.
 7. **Resolve and normalize.** hallubib verifies each reference against OpenAlex, Semantic Scholar, Crossref and arXiv: DOI fast path, title search with year tolerance, fuzzy matching backed by a 41K journal-abbreviation database. Matched records become CSL-JSON; source-native ids are kept verbatim.
 
