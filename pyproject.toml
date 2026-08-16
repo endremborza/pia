@@ -24,7 +24,7 @@ server = [
 papercli = "papercli.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/endremborza/papercli"
+Homepage = "https://github.com/endremborza/pia"
 
 [build-system]
 requires = ["hatchling"]
