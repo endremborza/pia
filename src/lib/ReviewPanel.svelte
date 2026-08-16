@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getReview } from './api';
+	import Foldable from './Foldable.svelte';
 	import type { Review } from './types';
 
 	let {
@@ -33,8 +34,12 @@
 	};
 </script>
 
-<section>
-	<h3>Peer review</h3>
+<Foldable>
+	{#snippet summary()}
+		Reviews
+		{#each reviews as n (n)}<span class="chip">review/{n}</span>{/each}
+	{/snippet}
+
 	{#if !reviews.length}
 		<p class="note">
 			The review agent reads the paper, searches Semantic Scholar and OpenAlex for missing work,
@@ -75,9 +80,16 @@
 			{/each}
 		</ol>
 	{/if}
-</section>
+</Foldable>
 
 <style>
+	.chip {
+		font-size: 0.8rem;
+		background: #f3f4f6;
+		color: #374151;
+		border-radius: 0.6rem;
+		padding: 0.15rem 0.5rem;
+	}
 	.findings li {
 		margin-bottom: 1.25rem;
 		border-left: 3px solid #d1d5db;

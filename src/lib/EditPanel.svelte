@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Foldable from './Foldable.svelte';
 	import type { Proposal } from './types';
 
 	let {
@@ -33,8 +34,12 @@
 					: '';
 </script>
 
-<section>
-	<h3>Edit by instruction</h3>
+<Foldable>
+	{#snippet summary()}
+		Edits
+		{#if proposal}<span class="chip busy">proposal pending</span>{/if}
+	{/snippet}
+
 	{#if !proposal}
 		<form onsubmit={submit}>
 			<input
@@ -59,9 +64,16 @@
 			<button class="secondary" onclick={onreject} disabled={disabled}>Reject — delete branch</button>
 		</div>
 	{/if}
-</section>
+</Foldable>
 
 <style>
+	.chip.busy {
+		font-size: 0.8rem;
+		background: #eff6ff;
+		color: #1d4ed8;
+		border-radius: 0.6rem;
+		padding: 0.15rem 0.5rem;
+	}
 	form {
 		display: flex;
 		gap: 0.5rem;

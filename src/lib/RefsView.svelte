@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Foldable from './Foldable.svelte';
 	import type { RefSummary } from './types';
 
 	let { refs }: { refs: RefSummary[] } = $props();
@@ -16,11 +17,15 @@
 	};
 </script>
 
-<section>
-	<h3>References ({refs.length}), verified online</h3>
+<Foldable>
+	{#snippet summary()}
+		References
+		<span class="chip">{refs.length}</span>
+	{/snippet}
+
 	<p class="note">
-		Most problematic first — hallubib's confidence taxonomy, shown as-is. Every id links to the
-		source's own record.
+		Verified online, most problematic first — hallubib's confidence taxonomy, shown as-is. Every id
+		links to the source's own record.
 	</p>
 	<ul class="refs">
 		{#each sorted as ref (ref.key)}
@@ -43,9 +48,16 @@
 			</li>
 		{/each}
 	</ul>
-</section>
+</Foldable>
 
 <style>
+	.chip {
+		font-size: 0.8rem;
+		background: #f3f4f6;
+		color: #374151;
+		border-radius: 0.6rem;
+		padding: 0.15rem 0.5rem;
+	}
 	.refs {
 		list-style: none;
 		padding: 0;

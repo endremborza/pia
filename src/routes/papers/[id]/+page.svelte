@@ -15,6 +15,7 @@
 	} from '$lib/api';
 	import AcceptView from '$lib/AcceptView.svelte';
 	import EditPanel from '$lib/EditPanel.svelte';
+	import Foldable from '$lib/Foldable.svelte';
 	import ParseView from '$lib/ParseView.svelte';
 	import RefsView from '$lib/RefsView.svelte';
 	import ReviewPanel from '$lib/ReviewPanel.svelte';
@@ -62,6 +63,7 @@
 
 	const running = $derived(paper?.run?.status === 'running');
 	const busy = $derived(running || (paper?.state.busy ?? false));
+	const exportsTag = $derived(paper?.state.exports);
 
 	async function remove() {
 		if (!paper || !confirm(`Delete "${paper.title}"? This cannot be undone.`)) return;
@@ -121,13 +123,6 @@
 				<ParseView paper={paper.parse} />
 			{/if}
 		{:else}
-			{#if paper.parse}
-				<ParseView paper={paper.parse} />
-			{/if}
-			{#if paper.refs.length}
-				<RefsView refs={paper.refs} />
-			{/if}
-
 			<ReviewPanel
 				{id}
 				reviews={paper.state.reviews}
@@ -143,14 +138,28 @@
 				onreject={() => act(() => rejectProposal(id))}
 			/>
 
-			<section>
-				<h3>Export</h3>
+			{#if paper.parse}
+				<Foldable>
+					{#snippet summary()}The Paper{/snippet}
+					<ParseView paper={paper.parse} />
+				</Foldable>
+			{/if}
+
+			{#if paper.refs.length}
+				<RefsView refs={paper.refs} />
+			{/if}
+
+			<Foldable>
+				{#snippet summary()}
+					Exports
+					{#if exportsTag}<span class="chip">export/{exportsTag}</span>{/if}
+				{/snippet}
 				<p class="note">
 					tectonic builds the paper from its canonical LaTeX; the bibliography renders from the
 					CSL-JSON store through citeproc, in the paper's detected style.
 				</p>
 				<button onclick={() => act(() => exportPaper(id))} disabled={busy}>Export PDF</button>
-			</section>
+			</Foldable>
 		{/if}
 
 		<section>
