@@ -26,6 +26,7 @@ from papercli import (
     approve,
     create_from_pdf,
     create_from_tex,
+    delete,
     export,
     findings_json,
     gitstore,
@@ -205,6 +206,12 @@ def paper_state(paper_id: str) -> dict:
         "proposal": diff,
         "log": gitstore.log_oneline(repo, 20),
     }
+
+
+@app.delete("/api/papers/{paper_id}")
+def delete_paper(paper_id: str) -> dict:
+    delete(_repo(paper_id))
+    return {"deleted": True}
 
 
 @app.post("/api/papers/{paper_id}/accept")

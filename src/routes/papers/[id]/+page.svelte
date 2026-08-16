@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
 		acceptPaper,
 		approveProposal,
+		deletePaper,
 		doEdit,
 		exportPaper,
 		getPaper,
@@ -60,6 +62,17 @@
 
 	const running = $derived(paper?.run?.status === 'running');
 	const busy = $derived(running || (paper?.state.busy ?? false));
+
+	async function remove() {
+		if (!paper || !confirm(`Delete "${paper.title}"? This cannot be undone.`)) return;
+		error = undefined;
+		try {
+			await deletePaper(id);
+			await goto('/');
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Delete failed.';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -67,7 +80,12 @@
 </svelte:head>
 
 <main>
-	<nav><a href="/">← papers</a></nav>
+	<nav>
+		<a href="/">← papers</a>
+		{#if paper}
+			<button type="button" class="delete" onclick={remove} disabled={busy}>Delete</button>
+		{/if}
+	</nav>
 
 	{#if !paper}
 		<p aria-busy="true">Loading…</p>
@@ -152,7 +170,23 @@
 		line-height: 1.5;
 	}
 	nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
 		margin-bottom: 1rem;
+	}
+	.delete {
+		font-size: 0.85rem;
+		color: #b91c1c;
+		background: none;
+		border: 1px solid #fca5a5;
+		border-radius: 0.3rem;
+		padding: 0.15rem 0.5rem;
+		cursor: pointer;
+	}
+	.delete:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 	.chips {
 		margin: 0.25rem 0 1rem;

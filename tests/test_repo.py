@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from papercli import gitstore
-from papercli.ingest import adopt
+from papercli.ingest import adopt, delete
 from papercli.lock import RepoBusy, hold
 from papercli.repo import LOCK_FILE
 
@@ -46,6 +46,18 @@ def _reaped_pid() -> int:
     proc = subprocess.Popen([sys.executable, "-c", ""])
     proc.wait()
     return proc.pid
+
+
+def test_delete_removes_the_whole_repo(adopted: Path):
+    delete(adopted)
+    assert not adopted.exists()
+
+
+def test_delete_refuses_a_locked_repo(adopted: Path):
+    (adopted / LOCK_FILE).write_text(f"{os.getpid()} review")
+    with pytest.raises(RepoBusy):
+        delete(adopted)
+    assert adopted.exists()
 
 
 def test_live_lock_is_respected(tmp_path: Path):

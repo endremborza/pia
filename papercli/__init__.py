@@ -15,6 +15,7 @@ from papercli.ingest import accept as accept
 from papercli.ingest import adopt as adopt
 from papercli.ingest import create_from_pdf as create_from_pdf
 from papercli.ingest import create_from_tex as create_from_tex
+from papercli.ingest import delete as delete
 from papercli.ingest import reconstruct_candidate as reconstruct_candidate
 from papercli.ingest import refine_candidate as refine_candidate
 from papercli.ingest import resolve_repo as resolve_repo

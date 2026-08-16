@@ -1,19 +1,34 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import AgentSelects from '$lib/AgentSelects.svelte';
-	import { listPapers, uploadPaper } from '$lib/api';
+	import { deletePaper, listPapers, uploadPaper } from '$lib/api';
 	import type { PaperListItem } from '$lib/types';
 
-	let kind = $state<'latex' | 'pdf'>('latex');
+	let kind = $state<'latex' | 'pdf'>('pdf');
 	let error = $state<string>();
 	let uploading = $state(false);
 	let ready = $state(false);
 	let papers = $state<PaperListItem[]>([]);
+	let deleting = $state<string>();
 
 	$effect(() => {
 		ready = true;
 		listPapers().then((p) => (papers = p)).catch(() => {});
 	});
+
+	async function remove(p: PaperListItem) {
+		if (!confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
+		deleting = p.id;
+		error = undefined;
+		try {
+			await deletePaper(p.id);
+			papers = papers.filter((x) => x.id !== p.id);
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Delete failed.';
+		} finally {
+			deleting = undefined;
+		}
+	}
 
 	async function upload(e: SubmitEvent) {
 		e.preventDefault();
@@ -66,8 +81,8 @@
 	<form onsubmit={upload}>
 		<fieldset>
 			<legend>Input format</legend>
-			<label><input type="radio" name="kind" value="latex" bind:group={kind} /> LaTeX (.tex)</label>
 			<label><input type="radio" name="kind" value="pdf" bind:group={kind} /> PDF</label>
+			<label><input type="radio" name="kind" value="latex" bind:group={kind} /> LaTeX (.tex)</label>
 		</fieldset>
 		{#if kind === 'pdf'}
 			<p class="reconstruct-opts">
@@ -97,6 +112,14 @@
 					<li>
 						<a href="/papers/{p.id}">{p.title}</a>
 						{#if !p.accepted}<span class="pending">awaiting acceptance</span>{/if}
+						<button
+							type="button"
+							class="delete"
+							onclick={() => remove(p)}
+							disabled={deleting === p.id}
+						>
+							{deleting === p.id ? 'Deleting…' : 'Delete'}
+						</button>
 					</li>
 				{/each}
 			</ul>
@@ -143,5 +166,15 @@
 		font-size: 0.85rem;
 		color: #b45309;
 		margin-left: 0.5rem;
+	}
+	.delete {
+		font-size: 0.8rem;
+		margin-left: 0.75rem;
+		color: #b91c1c;
+		background: none;
+		border: 1px solid #fca5a5;
+		border-radius: 0.3rem;
+		padding: 0.05rem 0.4rem;
+		cursor: pointer;
 	}
 </style>

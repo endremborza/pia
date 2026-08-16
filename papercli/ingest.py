@@ -6,6 +6,7 @@ on resolve_repo: references parsed, verified online through hallubib, stored as
 CSL-JSON, derived files regenerated, everything committed and tagged parse/N.
 """
 
+import shutil
 from collections.abc import Callable
 from pathlib import Path
 
@@ -55,6 +56,14 @@ def adopt(path: Path) -> Path:
     ensure_gitignore(path)
     untrack_runtime(path)
     return path
+
+
+def delete(repo: Path) -> None:
+    """Drop a papercli repo entirely — the repo is the only state, so this is the
+    whole delete. Guarded by the lock so a run in flight cannot be pulled out
+    from under itself."""
+    with hold(repo, "delete"):
+        shutil.rmtree(repo)
 
 
 def reconstruct_candidate(

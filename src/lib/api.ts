@@ -42,6 +42,8 @@ export const listPapers = () => api<PaperListItem[]>('/api/papers');
 export const getPaper = (id: string) => api<PaperDetail>(`/api/papers/${id}`);
 export const uploadPaper = (form: FormData) =>
 	api<{ id: string }>('/api/papers', { method: 'POST', body: form });
+export const deletePaper = (id: string) =>
+	api<{ deleted: boolean }>(`/api/papers/${id}`, { method: 'DELETE' });
 export const getReview = (id: string, n: number) => api<Review>(`/api/papers/${id}/reviews/${n}`);
 export const startReview = (id: string) => post(`/api/papers/${id}/review`);
 export const doEdit = (id: string, command: string) => post(`/api/papers/${id}/do`, { command });
