@@ -2,4 +2,15 @@
 __pycache__/
 node_modules/
 .env
+.env.*
+!.env.sample
 *.pdf
+!e2e/fixtures/rankless.pdf
+.cril
+/demo
+/.svelte-kit
+/build
+/dist
+/test-results
+/playwright-report
+vite.config.ts.timestamp-*
