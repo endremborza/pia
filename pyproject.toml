@@ -1,7 +1,42 @@
 [project]
-name = "paper-improvement-agent"
-version = "0.1.0"
-description = "Research paper improvement agent - respecting citations"
+name = "papercli"
+description = "Iterate on a paper as git-versioned LaTeX source - review, edit and export with citations intact"
+dynamic = ["version"]
+authors = [{name = "Endre Márk Borza", email = "endremborza@gmail.com"}]
+license = {file = "LICENSE"}
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "citeproc-py>=0.10.7",
+    "hallubib>=0.3.0",
+    "lxml>=6.1.1",
+    "paritex>=0.1.0",
+]
+
+[project.optional-dependencies]
+server = [
+    "fastapi>=0.141.1",
+    "python-multipart>=0.0.32",
+    "uvicorn>=0.52.3",
+]
+
+[project.scripts]
+papercli = "papercli.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/endremborza/papercli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "papercli/__init__.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
