@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="review">
+      <attribute name="paper"/>
+      <oneOrMore>
+        <ref name="finding"/>
+      </oneOrMore>
+    </element>
+  </start>
+  <define name="finding">
+    <element name="finding">
+      <attribute name="kind">
+        <choice>
+          <value>missing-citation</value>
+          <value>unsupported-claim</value>
+          <value>weak-support</value>
+          <value>structure</value>
+          <value>other</value>
+        </choice>
+      </attribute>
+      <attribute name="severity">
+        <choice>
+          <value>minor</value>
+          <value>major</value>
+        </choice>
+      </attribute>
+      <attribute name="confidence">
+        <data type="decimal">
+          <param name="minInclusive">0</param>
+          <param name="maxInclusive">1</param>
+        </data>
+      </attribute>
+      <optional>
+        <element name="section"><text/></element>
+      </optional>
+      <optional>
+        <element name="claim"><text/></element>
+      </optional>
+      <zeroOrMore>
+        <element name="cite">
+          <attribute name="key"/>
+          <empty/>
+        </element>
+      </zeroOrMore>
+      <oneOrMore>
+        <element name="source">
+          <attribute name="api">
+            <choice>
+              <value>openalex</value>
+              <value>semanticscholar</value>
+              <value>crossref</value>
+              <value>arxiv</value>
+              <value>doi</value>
+            </choice>
+          </attribute>
+          <attribute name="id"/>
+          <empty/>
+        </element>
+      </oneOrMore>
+      <optional>
+        <element name="verdict">
+          <choice>
+            <value>supported</value>
+            <value>partial</value>
+            <value>unsupported</value>
+          </choice>
+        </element>
+      </optional>
+      <element name="note"><text/></element>
+      <optional>
+        <element name="suggestion"><text/></element>
+      </optional>
+    </element>
+  </define>
+</grammar>
