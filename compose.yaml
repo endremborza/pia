@@ -3,7 +3,7 @@ services:
     build: .
     env_file: .env
     ports:
-      - "127.0.0.1:5060:8000"
+      - "5060:8000"
     volumes:
       - papercli-data:/data
     restart: unless-stopped
