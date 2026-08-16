@@ -1,0 +1,133 @@
+% Rankless: ICWE 2026 Demo Paper -- purposefully incomplete demo fixture:
+% missing related work (VOSviewer, CiteSpace), a dangling \cite{leiden}, and an uncited scimago reference.
+\documentclass{article}
+\usepackage[margin=1.1in]{geometry}
+%
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\renewcommand\UrlFont{\rmfamily}
+\urlstyle{rm}
+%
+\newcommand{\evalQueries}{792}
+\newcommand{\evalConfigs}{32}
+\newcommand{\evalRootTypes}{5}
+\newcommand{\evalTimeFlask}{6\,402.3}
+\newcommand{\evalTimeRs}{98.0}
+\newcommand{\evalSpeedup}{65.3}
+\newcommand{\evalFlaskPeak}{4\,222}
+\newcommand{\evalRsPeak}{1\,225}
+\newcommand{\evalPeakRatio}{3.4}
+\newcommand{\evalHaN}{20}
+%
+\begin{document}
+%
+\title{Rankless: Data-Specific Compilation for Real-Time Citation Network Exploration}
+%
+\author{Endre M. Borza\thanks{Center for Collective Learning, CIAS, Corvinus University, Budapest, Hungary. \texttt{endre.borza@uni-corvinus.hu}}}
+%
+\maketitle
+%
+\begin{abstract}
+Interactive exploration of the global scholarly citation network -- hundreds of millions of papers, billions of edges -- is a highly challenging task: databases are too slow for deep hierarchical breakdowns, while full precomputation is infeasible across millions of queryable entities. We present Rankless, a publicly deployed platform built on \emph{data-specific compilation}, a build-time pipeline that compiles dataset structure into Rust source code and typed binary layouts, eliminating runtime query parsing, planning, and type dispatch, while increasing caching efficiency. In a controlled comparison of \evalQueries{}~hierarchical queries across \evalRootTypes{}~entity types, Rankless responds \evalSpeedup{}$\times$ faster and uses \evalPeakRatio{}$\times$ less peak memory than a PostgreSQL~+~Flask baseline. The live system at \texttt{rankless.org} serves interactive visualizations based on this technology from a single commodity server.
+
+\end{abstract}
+
+\noindent\emph{Keywords:} data visualization; scholarly data; low-latency web systems; metaprogramming; graph analytics
+
+%
+%
+\section{Introduction}
+\label{sec:intro}
+
+Exploring how a university's impact distributes across countries, or which subfields drive an author's citations, requires navigating hundreds of millions of papers connected by billions of edges. Existing platforms provide search and retrieval~\cite{semscholar,openalex} or reduce complex profiles to ordinal rankings~\cite{leiden} -- none deliver real-time, multi-level hierarchical breakdowns at full dataset scale.
+
+We present Rankless~\cite{ranklessrepo}, demonstrating that large, mostly-static datasets are more efficiently served by compiling dataset knowledge into the binary than by querying a database at runtime -- a web architecture pattern we term \emph{data-specific compilation}. A build-time pipeline generates typed Rust code and binary layouts from the dataset's structure, the serving layer executes queries over arrays with no query planner, no type dispatch, and no SQL layer -- sub-second interactive exploration from a single commodity server, directly addressing ICWE~2026's focus on performant and sustainable web systems.
+
+%
+\section{System Architecture}
+\label{sec:architecture}
+
+\subsection{Data-Specific Compilation Pipeline}
+
+The pipeline ingests OpenAlex~\cite{openalex} JSON dumps and SCImago journal rankings through sequential Rust steps. Each step reads predecessors' outputs, writes binary data, and generates Rust source via the \texttt{dmove\_macro} metaprogramming crate -- producing entity type definitions, attribute accessors, and link iterators whose types match actual data dimensions. The serving binary encodes every byte layout at compile time; the run phase is a stateless HTTP server.
+
+\subsection{Serving Layer}
+
+The Axum HTTP server loads binary data. A Unicode-normalized trie provides sub-millisecond entity search. A thread-pooled tree engine builds multi-level breakdowns on the fly -- e.g., impact by field~$\to$~subfield~$\to$~country -- surfacing the most-cited paper per branch. Entities with ${>}100$k citations are proactively cached. The Svelte frontend renders visualizations as hand-written SVG, with Cytoscape.js~\cite{cytoscape} for co-authorship layout - the sole dependency.
+
+%
+\section{Performance Evaluation}
+\label{sec:evaluation}
+
+We compare Rankless against a PostgreSQL~+~Flask baseline serving the same OpenAlex data in a normalized, indexed schema. Both systems run in Docker containers on the same machine over \evalQueries{}~hierarchical queries spanning \evalRootTypes{}~entity types and \evalConfigs{}~breakdown configurations with 1--4 hierarchy levels (Table~\ref{tab:benchmark}). A full benchmark description is available in the project repository.\footnote{\url{https://github.com/endremborza/rankless/blob/rankless-main/docs/benchmarking}}
+
+\begin{table}[t]
+\caption{Performance comparison over \evalQueries{} hierarchical breakdown queries.}\label{tab:benchmark}
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Metric & PostgreSQL + Flask & Rankless (Rust) & Ratio \\
+\midrule
+Total query time & \evalTimeFlask{}\,s & \evalTimeRs{}\,s & \evalSpeedup{}$\times$ \\
+Peak memory & \evalFlaskPeak{}\,MiB & \evalRsPeak{}\,MiB & \evalPeakRatio{}$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rankless completes the full query set in \evalTimeRs{}\,s -- averaging ${\sim}$124\,ms per query -- versus \evalTimeFlask{}\,s for the baseline PostgreSQL. The baseline uses standard best practices (indexes, foreign keys, normalized schema), without query-specific denormalization.
+Beyond eliminating joins and query planning, the generated code produces functions simple enough to avoid pressure on the L1 instruction cache, and typed layouts use narrow integer widths, reducing data cache pressure. Correctness was validated by comparing breakdown trees from both systems: \evalHaN{}/\evalConfigs{} configurations achieve Pearson~$r > 0.99$ with mean relative error below~1\%.
+
+%
+\section{Demonstration Scenario}
+\label{sec:demo}
+
+Attendees interact directly with the live system\footnote{\url{https://rankless.org}} using a browser. Each cycle lasts under two minutes and can be repeated for multiple participants:
+
+\begin{enumerate}
+\item \textbf{Personal discovery.} Attendees search for their own institution or themselves as an author -- autocomplete responds in under 10\,ms -- and immediately see a research profile.
+\item \textbf{Hierarchical exploration.} The interactive tree reveals how impact distributes across fields, countries, and institutions: an attendee can discover, for example, which subfield at their university attracts the most international citations.
+\item \textbf{Live reconfiguration.} Toggling between \emph{production} and \emph{impact}, applying year filters, and switching breakdown axes trigger instant recomputation -- demonstrating compiled data access in practice.
+\item \textbf{Network views.} Research-space networks, geographical citation flows, co-authorship graphs, and author peer heatmaps provide complementary perspectives on any entity.
+\end{enumerate}
+
+This dataset covers 1.7B~citations, 80M~works, 4M~authors, and 33k~institutions from the OpenAlex snapshot, entities with sufficient citation activity for meaningful breakdowns.
+
+%
+\section{Related Work}
+\label{sec:related}
+
+Semantic Scholar~\cite{semscholar} and OpenAlex~\cite{openalex} provide search and API access but optimize for retrieval, not interactive multi-level analytics. Graph databases and OLAP engines support flexible analytical queries but incur runtime query-planning overhead that grows with hierarchy depth. Rankless trades the flexibility of general-purpose query engines for speed and efficiency by compiling dataset structure directly into the binary -- a trade-off viable when data is large, mostly static, and queried along known hierarchical dimensions.
+
+%
+\section{Conclusion}
+\label{sec:conclusion}
+
+Data-specific compilation -- generating typed code and binaries from dataset characteristics -- enables interactive exploration of billion-edge graphs from a single commodity server at \evalSpeedup{}$\times$ the throughput of a database baseline. The pattern applies wherever large, mostly-static data is queried along known dimensions: biological interaction networks, knowledge graphs, or web-scale recommendation systems. By replacing a database cluster with a compiled binary, data-specific compilation also offers a concrete, lower-energy web architecture. Future work will focus on structured APIs for autonomous scholarly agents.
+
+%
+\subsection*{Acknowledgments}
+Supported by the Learn Data ERA Chair from the European Research Executive Agency, funded by the European Union under Horizon Europe Grant Agreement 101086712.
+The author used generative AI for stylistic editing of the manuscript.
+The author has no competing interests to declare that are relevant to the content of this article.
+%
+\begin{thebibliography}{8}
+
+\bibitem{openalex}
+Priem, J., Piwowar, H., Orr, R.: OpenAlex: A fully-open index of scholarly works, authors, venues, institutions, and concepts. arXiv:2205.01833 (2022)
+
+\bibitem{semscholar}
+Kinney, R., et al.: The Semantic Scholar open data platform. arXiv:2301.10140 (2023)
+
+\bibitem{scimago}
+SCImago Journal Rank, \url{https://www.scimagojr.com} (2026)
+
+\bibitem{cytoscape}
+Shannon, P., et al.: Cytoscape: A software environment for integrated models of biomolecular interaction networks. Genome Research \textbf{13}(11), 2498--2504 (2003)
+
+\bibitem{ranklessrepo}
+Borza, E.M.: Rankless, \url{https://github.com/endremborza/rankless} (2026)
+
+\end{thebibliography}
+\end{document}

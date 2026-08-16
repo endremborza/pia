@@ -1,0 +1,72 @@
+# e2e config: no real LLM anywhere. The fake backend below scripts every agent
+# role; its reconstruction is a deliberate skeleton, so the ~20% parity the run
+# reports is the honesty gate working, not a real reconstruction result.
+projects_root = "test-results/projects"
+
+[agent]
+backend = "fake"
+
+[reconstruct]
+backend = "fake"
+rounds = 1
+target = 0.5
+
+[agent.backends.fake]
+argv = ["sh", "-c", '''
+prompt=$(cat)
+case "$prompt" in
+*review.xml*)
+  mkdir -p reviews/1
+  cat > reviews/1/sources.json <<'SOURCES'
+{"queries": [{"query": "research metrics evaluation critique", "records": [{"source": "openalex", "title": "Bibliometrics: The Leiden Manifesto for research metrics", "authors": [{"family": "Hicks", "given": "Diana", "literal": ""}, {"family": "Wouters", "given": "Paul", "literal": ""}], "year": 2015, "journal": "Nature", "volume": "520", "number": "7548", "pages": "429-431", "doi": "10.1038/520429a", "url": "https://doi.org/10.1038/520429a", "abstract": "Use these ten principles to guide research evaluation.", "type": "article-journal", "publisher": "", "ids": {"openalex": "W2088383468", "doi": "10.1038/520429a"}}], "failures": []}]}
+SOURCES
+  cat > reviews/1/review.xml <<'REVIEW'
+<review paper="Rankless">
+  <finding kind="missing-citation" severity="major" confidence="0.85">
+    <section>Related Work</section>
+    <claim>Existing platforms reduce complex profiles to ordinal rankings.</claim>
+    <source api="openalex" id="W2088383468"/>
+    <note>The Leiden Manifesto is the canonical critique of metric-driven evaluation; a paper motivated by rank-free exploration should engage it directly.</note>
+    <suggestion>Cite it in Related Work when contrasting Rankless with ranking platforms.</suggestion>
+  </finding>
+</review>
+REVIEW
+  ;;
+*original.pdf*)
+  cat > main.tex <<'TEX'
+\documentclass{article}
+\usepackage[margin=1.1in]{geometry}
+\begin{document}
+\title{Rankless: Data-Specific Compilation for Real-Time Citation Network Exploration}
+\author{Endre M. Borza}
+\maketitle
+\begin{abstract}
+Interactive exploration of the global scholarly citation network is a highly challenging task. We present Rankless, a publicly deployed platform built on data-specific compilation, compiling dataset structure into Rust source code and typed binary layouts. Rankless responds faster and uses less peak memory than a PostgreSQL baseline.
+\end{abstract}
+\section{Introduction}
+Existing platforms provide search and retrieval~\cite{semscholar,openalex} or reduce profiles to rankings~\cite{leiden}. We present Rankless~\cite{ranklessrepo}.
+\section{System Architecture}
+The pipeline ingests OpenAlex~\cite{openalex} dumps. The frontend uses Cytoscape.js~\cite{cytoscape}.
+\section{Performance Evaluation}
+Rankless is faster than the PostgreSQL + Flask baseline.
+\section{Related Work}
+Semantic Scholar~\cite{semscholar} and OpenAlex~\cite{openalex} optimize for retrieval.
+\section{Conclusion}
+Data-specific compilation enables interactive exploration of billion-edge graphs.
+\bibliographystyle{plain}
+\bibliography{refs}
+\end{document}
+TEX
+  cat > refs.bib <<'BIB'
+@article{openalex, title={OpenAlex: A fully-open index of scholarly works, authors, venues, institutions, and concepts}, author={Priem, Jason and Piwowar, Heather and Orr, Richard}, year={2022}, journal={arXiv}}
+@article{semscholar, title={The Semantic Scholar open data platform}, author={Kinney, Rodney}, year={2023}, journal={arXiv}}
+@article{leiden, title={Bibliometrics: The Leiden Manifesto for research metrics}, author={Hicks, Diana and Wouters, Paul}, year={2015}, journal={Nature}, volume={520}, number={7548}, pages={429--431}, doi={10.1038/520429a}}
+@article{cytoscape, title={Cytoscape: A software environment for integrated models of biomolecular interaction networks}, author={Shannon, Paul}, year={2003}, journal={Genome Research}, volume={13}, number={11}, pages={2498--2504}}
+@misc{ranklessrepo, title={Rankless}, author={Borza, Endre M.}, year={2026}, url={https://github.com/endremborza/rankless}}
+BIB
+  ;;
+*)
+  python3 -c "import pathlib; p=pathlib.Path('main.tex'); t=p.read_text(); p.write_text(t.replace(chr(92)+'end{document}', 'Improved for clarity via papercli.'+chr(10)+chr(92)+'end{document}', 1))"
+  ;;
+esac
+''']
