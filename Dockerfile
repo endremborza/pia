@@ -11,7 +11,7 @@ FROM node:24-slim AS frontend
 WORKDIR /fe
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY vite.config.ts tsconfig.json ./
+COPY vite.config.ts tsconfig.json svelte.config.js ./
 COPY static ./static
 COPY src ./src
 RUN npm run build
