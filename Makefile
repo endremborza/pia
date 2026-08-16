@@ -34,10 +34,6 @@ test: ## unit tests + headless browser e2e (starts both servers itself)
 e2e: ## browser e2e only
 	npx playwright test --project=e2e
 
-test-all: test ## also run the hallubib and paritex suites
-	cd ../../apps/hallubib && uv run pytest
-	cd ../../apps/paritex && uv run pytest
-
 texmf: ## fetch LaTeX classes tectonic's bundle lacks (llncs); wire via PARITEX_SEARCH_PATHS in .env
 	mkdir -p $(TEXMF_DIR)
 	curl -fsSL -o /tmp/llncs.zip https://mirrors.ctan.org/macros/latex/contrib/llncs.zip
@@ -48,5 +44,5 @@ texmf: ## fetch LaTeX classes tectonic's bundle lacks (llncs); wire via PARITEX_
 docker-build: ## build the deployment image (frontend + API + tectonic + claude)
 	docker compose build
 
-docker-up: ## build and (re)start the container on 127.0.0.1:5060
+docker-up: ## build and (re)start the container, serving on :5060 (all interfaces, gated by PAPERCLI_PASSWORD)
 	docker compose up -d --build
